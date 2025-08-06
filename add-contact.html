@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <title></title>
+    </head>
+    <body>
+        <br/>
+        <form id="editForm">
+            <label for="firstname">First name</label>
+            <input type="text" name="firstname" id="firstname"><br/>
+            <label for="lastname">Last name</label>
+            <input type="text" name="lastname" id="lastname"><br/>
+            <label for="mobile">Mobile</label>
+            <input type="text" name="mobile" id="mobile"><br/>
+            <label for="email">Email</label>
+            <input type="text" name="email" id="email"><br/>
+            <label for="avatar">Select a file</label>
+            <input type="file" name="avatar" id="avatar"><br/>
+            <button type="submit" id="submitForm">Submit</button>
+        </form>
+        <br/>
+        <button id="homeLink" type="button">Home</button>
+
+        <script src="config.js"></script>
+        <script>
+            document.getElementById("submitForm").addEventListener('click', submitForm);
+            document.getElementById("homeLink").addEventListener('click', homeLink);
+
+            async function submitForm(e) {
+                    e.preventDefault();
+                    
+                    const firstname = document.getElementById('firstname').value;
+                    const lastname = document.getElementById('lastname').value;
+                    const mobile = document.getElementById('mobile').value;
+                    const email = document.getElementById('email').value;
+                    const avatarFile = document.getElementById('avatar').files[0];
+                    
+                    try {
+                        // Upload avatar if exists
+                        let avatarUrl = '';
+                        if (avatarFile) {
+                        const storageRef = storage.ref(`avatars/${avatarFile.name}`);
+                        const snapshot = await storageRef.put(avatarFile);
+                        avatarUrl = await snapshot.ref.getDownloadURL();
+                        }
+                        
+                        // Add contact to Firestore
+                        await db.collection('contacts').add({
+                        firstname,
+                        lastname,
+                        mobile,
+                        email,
+                        avatar: avatarUrl,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+                        
+                        alert("Contact added successfully!");
+                        homeLink();
+                    } catch (error) {
+                        console.error("Error adding contact: ", error);
+                        alert("Error adding contact: " + error.message);
+                    }
+                    }
+        </script>
+    </body>
+</html>

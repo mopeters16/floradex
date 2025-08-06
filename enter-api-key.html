@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>API Key</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    </head>
+    <body>
+                <!-- Replace the entire form with Firebase auth -->
+            <div id="auth-container">
+            <div>
+                <h2>Sign In</h2>
+                <input type="email" id="email" placeholder="Email">
+                <input type="password" id="password" placeholder="Password">
+                <button id="signInButton">Sign In</button>
+                <button id="signUpButton">Sign Up</button>
+            </div>
+            </div>
+
+            <script>
+            document.getElementById("signInButton").addEventListener('click', signIn);
+            document.getElementById("signUpButton").addEventListener('click', signUp);
+
+            function signIn() {
+                const email = document.getElementById('email').value;
+                const password = document.getElementById('password').value;
+                
+                firebase.auth().signInWithEmailAndPassword(email, password)
+                .then(() => {
+                    window.open("index.html", "_self");
+                })
+                .catch(error => {
+                    alert(error.message);
+                });
+            }
+
+            function signUp() {
+                const email = document.getElementById('email').value;
+                const password = document.getElementById('password').value;
+                
+                firebase.auth().createUserWithEmailAndPassword(email, password)
+                .then(() => {
+                    window.open("index.html", "_self");
+                })
+                .catch(error => {
+                    alert(error.message);
+                });
+            }
+
+            // Check auth state
+            firebase.auth().onAuthStateChanged(user => {
+                if (user) {
+                window.open("index.html", "_self");
+                }
+            });
+            </script>
+    </body>
+</html>

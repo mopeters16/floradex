@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <title></title>
+    </head>
+    <body onload="getContact()">
+        <br/>
+        <div id="avatarImage"></div>
+        <form id="editForm">
+            <label for="firstname">First name</label>
+            <input type="text" name="firstname" id="firstname" readonly><br/>
+            <label for="lastname">Last name</label>
+            <input type="text" name="lastname" id="lastname" readonly><br/>
+            <label for="mobile">Mobile</label>
+            <input type="text" name="mobile" id="mobile" readonly><br/>
+            <label for="email">Email</label>
+            <input type="text" name="email" id="email" readonly><br/>
+            <label for="avatar" hidden>Select a file</label>
+            <input type="file" name="avatar" id="avatar" hidden><br/>
+            <button type="submit" id="submitForm" hidden>Submit</button>
+        </form>
+        <br/>
+        <button id="homeLink" type="button">Home</button>
+        <button id="editContact" type="button">Edit</button>
+        <button id="deleteContact" type="button">Delete</button>
+
+        <script src="config.js"></script>
+
+        <script>
+            var id = getId();
+            document.getElementById("homeLink").addEventListener('clcik', homeLink);
+            document.getElementById("editContact").addEventListener('click', editContact);
+            document.getElementById("submitForm").addEventListener('click', submitForm);
+            document.getElementById("deleteContact").addEventListener('click', deleteContact);
+
+            function getId(){
+                var url = window.location.href;
+                var pos = url.search("=");
+                var id = url.slice(pos + 1);
+                return id;
+            }
+
+            async function getContact() {
+                try {
+                    const doc = await db.collection('contacts').doc(id).get();
+                    if (doc.exists) {
+                    displayOutput(doc.data());
+                    } else {
+                    alert("Contact not found");
+                    homeLink();
+                    }
+                } catch (error) {
+                    console.error("Error getting contact: ", error);
+                    alert("Error getting contact: " + error.message);
+                }
+                }
+
+            function homeLink(){
+                window.open("index.html", "_self");
+            }
+
+            function displayOutput(data){
+                avatarImg = `
+                    <img src="${rootPath}/controller/uploads/${data[0].avatar}" width="200" />
+                `;
+                document.getElementById("avatarImage").innerHTML = avatarImg;
+                document.getElementById("firstname").value = data[0].firstname;
+                document.getElementById("lastname").value = data[0].lastname;
+                document.getElementById("mobile").value = data[0].mobile;
+                document.getElementById("email").value = data[0].email;
+            }
+
+            function editContact(){
+                document.getElementById("firstname").readOnly = false;
+                document.getElementById("lastname").readOnly = false;
+                document.getElementById("mobile").readOnly = false;
+                document.getElementById("email").readOnly = false;
+                document.getElementById("avatar").hidden = false;
+                document.getElementById("submitForm").hidden = false;
+            }
+
+            async function submitForm(e) {
+                e.preventDefault();
+                
+                const firstname = document.getElementById('firstname').value;
+                const lastname = document.getElementById('lastname').value;
+                const mobile = document.getElementById('mobile').value;
+                const email = document.getElementById('email').value;
+                const avatarFile = document.getElementById('avatar').files[0];
+                
+                try {
+                    const updateData = {
+                    firstname,
+                    lastname,
+                    mobile,
+                    email,
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                    };
+                    
+                    // Upload new avatar if exists
+                    if (avatarFile) {
+                    const storageRef = storage.ref(`avatars/${avatarFile.name}`);
+                    const snapshot = await storageRef.put(avatarFile);
+                    updateData.avatar = await snapshot.ref.getDownloadURL();
+                    }
+                    
+                    await db.collection('contacts').doc(id).update(updateData);
+                    alert("Contact updated successfully!");
+                    homeLink();
+                } catch (error) {
+                    console.error("Error updating contact: ", error);
+                    alert("Error updating contact: " + error.message);
+                }
+            }
+
+            async function deleteContact() {
+                const confirmDelete = confirm("Delete contact. Are you sure?");
+                if (confirmDelete) {
+                    try {
+                    await db.collection('contacts').doc(id).delete();
+                    homeLink();
+                    } catch (error) {
+                    console.error("Error deleting contact: ", error);
+                    alert("Error deleting contact: " + error.message);
+                    }
+                }
+            }
+
+        </script>
+    </body>
+</html>
